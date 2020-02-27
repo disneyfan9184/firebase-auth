@@ -2,10 +2,42 @@
 // in the auth status of a user (ie login, logout, etc)
 auth.onAuthStateChanged(user => {
   if (user) {
-    console.log('User logged in: ', user);
+    // Get data
+    db.collection('guides')
+      .onSnapshot(snapshot => {
+        setupGuides(snapshot.docs);
+        setupUI(user);
+      })
+      .catch(error => {
+        console.log(error.message);
+      });
   } else {
-    console.log('User logged out');
+    setupUI();
+    setupGuides([]);
   }
+});
+
+// Create New Guide
+const createForm = document.getElementById('create-form');
+
+createForm.addEventListener('submit', e => {
+  e.preventDefault();
+
+  db.collection('guides')
+    .add({
+      // title: createForm.title.value
+      title: createForm['title'].value,
+      content: createForm['content'].value
+    })
+    .then(() => {
+      // Close modal and reset form
+      const modal = document.getElementById('modal-create');
+      M.Modal.getInstance(modal).close();
+      createForm.reset();
+    })
+    .catch(error => {
+      console.log(error.message);
+    });
 });
 
 // Signup user
