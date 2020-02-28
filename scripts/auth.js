@@ -3,14 +3,15 @@
 auth.onAuthStateChanged(user => {
   if (user) {
     // Get data
-    db.collection('guides')
-      .onSnapshot(snapshot => {
+    db.collection('guides').onSnapshot(
+      snapshot => {
         setupGuides(snapshot.docs);
         setupUI(user);
-      })
-      .catch(error => {
+      },
+      error => {
         console.log(error.message);
-      });
+      }
+    );
   } else {
     setupUI();
     setupGuides([]);
@@ -52,12 +53,23 @@ signupForm.addEventListener('submit', e => {
   const password = signupForm['signup-password'].value;
 
   // Sign up the user to firebase - asynchronous task
-  auth.createUserWithEmailAndPassword(email, password).then(cred => {
-    // console.log(cred.user);
-    const modal = document.getElementById('modal-signup');
-    M.Modal.getInstance(modal).close();
-    signupForm.reset();
-  });
+  auth
+    .createUserWithEmailAndPassword(email, password)
+    .then(cred => {
+      // console.log(cred.user);
+      // Firestore will automatically create this collection if it doesn't exist
+      return db
+        .collection('users')
+        .doc(cred.user.uid)
+        .set({
+          bio: signupForm['signup-bio'].value
+        });
+    })
+    .then(() => {
+      const modal = document.getElementById('modal-signup');
+      M.Modal.getInstance(modal).close();
+      signupForm.reset();
+    });
 });
 
 // Logout user
